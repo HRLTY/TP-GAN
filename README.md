@@ -1,20 +1,20 @@
 # TP-GAN
 
-Official TP-GAN Tensorflow implementation for the paper "[Beyond Face Rotation: Global and Local Perception GAN for Photorealistic and Identity Preserving Frontal View Synthesis](http://openaccess.thecvf.com/content_ICCV_2017/papers/Huang_Beyond_Face_Rotation_ICCV_2017_paper.pdf)" (ICCV17).
+Official TP-GAN Tensorflow implementation for the ICCV17 paper "[Beyond Face Rotation: Global and Local Perception GAN for Photorealistic and Identity Preserving Frontal View Synthesis](http://openaccess.thecvf.com/content_ICCV_2017/papers/Huang_Beyond_Face_Rotation_ICCV_2017_paper.pdf)" by Huang, Rui and Zhang, Shu and Li, Tianyu and He, Ran.
 
-Basically, it recovers a frontal face image of the same person from a single face image under any poses.
+The goal is to recover a frontal face image of the same person from a single face image under any poses.
 
 Here are some examples from the paper.![image](images/ownsynthesis.jpg)
 
-###Testing images
+### Testing images
 
 Synthesized  testing images of all poses, corresponding illumination in Setting 2 in MultiPIE can be obtained [here](https://drive.google.com/file/d/1Kx0sMjFTzLX3-rZ03TAVBAj-gcd9rJrd/view?usp=sharing). 
 
 Synthesized images for other illumination condition and/or training set can be obtained upon request.
 
-###Random examples
+### Random examples
 
-Random examples of 10 testing image pairs for each degree:
+Here are random examples of 10 testing image pairs for each degree.
 
 15 and 30 degrees: 
 <p align="center">
@@ -37,7 +37,7 @@ It was initially written in Tensorflow 0.12.
 
 This is an initial release of code, which may not be fully tested. Refinement, pre-trained models, and precomputed testing image features will come later.
 
-###Citation and Contact
+### Citation and Contact
 
 If you like our work or find our code useful, welcome to cite our paper!
 
