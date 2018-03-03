@@ -6,9 +6,13 @@ Basically, it recovers a frontal face image of the same person from a single fac
 
 Here are some examples from the paper.![image](images/ownsynthesis.jpg)
 
-Synthesized images of all poses, frontal illumination in **Testing** Setting 2 in MultiPIE can be obtained [here](). Some of **randomly** selected testing images are shown below.
+###Testing images
+
+Synthesized  testing images of all poses, corresponding illumination in Setting 2 in MultiPIE can be obtained [here](https://drive.google.com/file/d/1Kx0sMjFTzLX3-rZ03TAVBAj-gcd9rJrd/view?usp=sharing). 
 
 Synthesized images for other illumination condition and/or training set can be obtained upon request.
+
+###Random examples
 
 Random examples of 10 testing image pairs for each degree:
 
@@ -27,7 +31,13 @@ Random examples of 10 testing image pairs for each degree:
 <img src="images/75-rand.png", width="300", border="10"><img src="images/90-rand.png", width="300", border="10">
 </p> 
 
+### Note
+
+It was initially written in Tensorflow 0.12.
+
 This is an initial release of code, which may not be fully tested. Refinement, pre-trained models, and precomputed testing image features will come later.
+
+###Citation and Contact
 
 If you like our work or find our code useful, welcome to cite our paper!
 
