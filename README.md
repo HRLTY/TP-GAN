@@ -14,24 +14,24 @@ Random examples of 10 testing image pairs for each degree:
 
 15 and 30 degrees: 
 <p align="center">
-<img src="images/30-rand.png", width="300", border="10"><img src="images/30-rand.png", width="300", border="10">
+<img src="images/15-rand.png", width="300", border="10">   <img src="images/30-rand.png", width="300", border="10">
 </p> 
 
 45 and 60 degrees:
 <p align="center">
-<img src="images/45-rand.png", width="300", border="10"><img src="images/60-rand.png", width="304", border="10">
+<img src="images/45-rand.png", width="300", border="10">   <img src="images/60-rand.png", width="304", border="10">
 </p> 
 
 75 and 90 degrees:
 <p align="center">
-<img src="images/75-rand.png", width="300", border="10"><img src="images/90-rand.png", width="306", border="10">
+<img src="images/75-rand.png", width="300", border="10"><img src="images/90-rand.png", width="300", border="10">
 </p> 
 
 This is an initial release of code, which may not be fully tested. Refinement, pre-trained models, and precomputed testing image features will come later.
 
 If you like our work or find our code useful, welcome to cite our paper!
 
-Any suggestion and/or comment would be valuable. Please send an email to Rui, huangrui AT cmu.edu or ruih2 AT cs.cmu.edu or other authors.
+Any suggestion and/or comment would be valuable. Please send an email to Rui at huangrui@cmu.edu or other authors.
 
       @InProceedings{Huang_2017_ICCV,
       author = {Huang, Rui and Zhang, Shu and Li, Tianyu and He, Ran},
