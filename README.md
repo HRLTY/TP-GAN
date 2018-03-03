@@ -28,7 +28,7 @@ Here are random examples of 10 testing image pairs for each degree.
 
 75 and 90 degrees:
 <p align="center">
-<img src="images/75-rand.png", width="300", border="10"><img src="images/90-rand.png", width="300", border="10">
+<img src="images/75-rand.png", width="300", border="10">   <img src="images/90-rand.png", width="306", border="10">
 </p> 
 
 ### Note
