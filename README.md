@@ -55,4 +55,6 @@ Any suggestion and/or comment would be valuable. Please send an email to Rui at 
       year = {2017}
       }
 
+### License
 
+This code is freely available for free non-commercial use, and may be redistributed under the conditions set by the license. Please, see the [license](https://github.com/HRLTY/TP-GAN/blob/master/LICENSE) for further details. For commercial queries, please contact [Rui Huang](http://www.andrew.cmu.edu/user/ruih2/) and [Ran He](http://www.nlpr.ia.ac.cn/english/irds/People/rhe.html).
