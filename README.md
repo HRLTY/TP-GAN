@@ -41,6 +41,11 @@ The input is cropped with the Matlab script `face_db_align_single_custom.m`, whi
 
 Some example cropping outputs is shown in folder `data-example`.
 
+The keypoints can be extracted from off-the-shelf landmark detectors, e.g. 'Zhang et al. Combining Data-driven and Model-driven Methods for Robust Facial Landmark Detection, 2016'. The synthesis performance is similar to using manually labelled keypoints.
+
+We thank Xiang Wu for providing the [face feature network](https://github.com/AlfredXiangWu/face_verification_experiment). We load it as `DeepFace` in the code, the weights are from a custom Light-CNN cafeemodel file.
+
+
 ### Citation and Contact
 
 If you like our work or find our code useful, welcome to cite our paper!
