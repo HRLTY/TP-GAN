@@ -1,6 +1,6 @@
 # TP-GAN
 
-Official TP-GAN Tensorflow implementation for the ICCV17 paper "[Beyond Face Rotation: Global and Local Perception GAN for Photorealistic and Identity Preserving Frontal View Synthesis](http://openaccess.thecvf.com/content_ICCV_2017/papers/Huang_Beyond_Face_Rotation_ICCV_2017_paper.pdf)" by Huang, Rui and Zhang, Shu and Li, Tianyu and He, Ran.
+Official TP-GAN Tensorflow implementation for the ICCV17 paper "[Beyond Face Rotation: Global and Local Perception GAN for Photorealistic and Identity Preserving Frontal View Synthesis](http://openaccess.thecvf.com/content_ICCV_2017/papers/Huang_Beyond_Face_Rotation_ICCV_2017_paper.pdf)" by [Huang, Rui](http://www.andrew.cmu.edu/user/ruih2/) and Zhang, Shu and Li, Tianyu and [He, Ran](http://www.nlpr.ia.ac.cn/english/irds/People/rhe.html).
 
 The goal is to **recover a frontal face image of the same person from a single face image under any poses**.
 
@@ -33,21 +33,23 @@ Here are random examples of 10 testing image pairs for each degree.
 
 ### Note
 
-It was initially written in Tensorflow 0.12.
+It was initially written in Tensorflow 0.12. If you have implemented another version, I'll be happy to reference it here.
 
-This is an improved version than the one used in paper.
+This is an initial release of code, which may not be fully tested. Refinement, input data example, pre-trained models, and precomputed testing image features will come later.
 
 The input is cropped with the Matlab script `face_db_align_single_custom.m`, which accepts 5 keypoints and outputs a cropped image and transformed keypoints.
 
 Some example cropping outputs is shown in folder `data-example`.
 
-The 45-90 degree images are used to train our 90-degree model only.
+Our 90-degree model only used 45-90 degree images for training. Other models we trained didn't use 90 degree images. 90 degree images' left and right eye patches coincide.
 
-The keypoints can be extracted from off-the-shelf landmark detectors, e.g. 'Zhang et al. Combining Data-driven and Model-driven Methods for Robust Facial Landmark Detection, 2016'. The synthesis performance is similar to using manually labelled keypoints.
+The 5 keypoints can be extracted from off-the-shelf landmark detectors, e.g. 'Zhang et al. Combining Data-driven and Model-driven Methods for Robust Facial Landmark Detection, 2016'. The synthesis performance is similar to using manually labelled keypoints.
 
-We thank Xiang Wu for providing the [face feature network](https://github.com/AlfredXiangWu/face_verification_experiment). We load it as `DeepFace` in the code, the weights are from a custom Light-CNN cafeemodel file.
+We thank Xiang Wu for providing the [face feature network](https://github.com/AlfredXiangWu/face_verification_experiment). We load it as `DeepFace` in the code, the weights are from a custom Light-CNN cafeemodel file. Our implementation borrowed code from the [dcgan repo](https://github.com/carpedm20/DCGAN-tensorflow).
 
-Our implementation borrowed code from the [dcgan repo](https://github.com/carpedm20/DCGAN-tensorflow)
+Update 0.1:
+
+- Adding `DeepFace168.pickle` weights file for Light-CNN. Please note this is an improved version than the one originally used in the experiment.
 
 ### Citation and Contact
 
