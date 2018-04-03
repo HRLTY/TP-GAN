@@ -46,14 +46,8 @@ class MultiPIE():
     def __init__(self, datasplit='train', Random=True, LOAD_60_LABEL=False, MIRROR_TO_ONE_SIDE=True, RANDOM_VERIFY=False,
                  GENERATE_MASK=False, source='without90', testing = False):
         self.dir = '/home/ruihuang/data/FS_aligned/'
-        #source = 'FS'
-        #self.csvpath = '/Users/huangrui/Developer/FaceRotationExperiment/{}.csv'
-
         self.csvpath = '/home/ruihuang/data/{}/{}.csv'
-        #self.landmarks = np.load('/data4/rui.huang/250landmarks.npy')
-        
         self.feat5ptDir = '/home/shu.zhang/ruihuang/data/FS_t5pt/'
-
         self.test_dir = '/home/shu.zhang/ruihuang/data/testlist/FS/{}.csv'
         self.testing = testing
 
@@ -197,17 +191,6 @@ class MultiPIE():
                             break
                     self.updateidx()
             images[i, ...], feats = self.load_image(self.indices[self.idx])
-            # if self.RANDOM_VERIFY and self.GENERATE_MASK:
-            #         labels[i, ...], masks[i, ...], verifyImages[i, ...], verifyLabels[i,...] =  self.load_label_mask_with_veri(self.indices[self.idx])
-            # elif self.RANDOM_VERIFY:
-            #         labels[i, ...], _, verifyImages[i, ...], verifyLabels[i,...] =  self.load_label_mask_with_veri(self.indices[self.idx])
-            # elif self.GENERATE_MASK:
-            #     labels[i, ...], masks[i, ...], _, _ =  self.load_label_mask_with_veri(self.indices[self.idx])
-            # else:#no extra supplies
-            #     if labelnum is not None:
-            #         labels[i, ...], _, _, _ =  self.load_label_mask_with_veri(self.indices[self.idx], labelnum[i])
-            #     else:
-            #         labels[i, ...], _, _, _ =  self.load_label_mask_with_veri(self.indices[self.idx])
             filename = self.indices[self.idx]
             labels[i,...], _, leyel[i,...], leyer[i,...], lnose[i,...], lmouth[i, ...] = self.load_label_mask(filename)
 
@@ -220,12 +203,6 @@ class MultiPIE():
             eyer[i,...] = feats[2]
             nose[i,...] = feats[3]
             mouth[i, ...] = feats[4]
-
-            # marks = []
-            # for k in range(68):
-            #     if k+1 in [1,5,9,13,17,18,22,23,27,28,31,32,36,37,40,43,46,49,55]:
-            #         marks.extend(self.landmarks[identity,k*2:k*2+2])
-            # landmarklabels[i,:] = marks[:]
             self.updateidx()
         return images, labels, masks, verifyImages, verifyLabels, poselabels, idenlabels, landmarklabels,\
                eyel, eyer, nose, mouth, leyel, leyer, lnose, lmouth
@@ -245,51 +222,17 @@ class MultiPIE():
             - concatenate together
             """
             im = Image.open(self.dir + filename)
-            #codename = self.findBestIllumCodeImagepath(filename)[0]
-            #codeImg = Image.open(self.codeLabelDir + codename)
-
-            # if (codeImg.size)[0] != IMAGE_SIZE:
-            #     #im = im.resize((IMAGE_SIZE,IMAGE_SIZE))
-            #     codeImg = codeImg.resize((IMAGE_SIZE,IMAGE_SIZE))
-            # if self.MIRROR_TO_ONE_SIDE and self.findPose(filename) < 0:
-            #     im = im.transpose(Image.FLIP_LEFT_RIGHT)
-                #codeImg = codeImg.transpose(Image.FLIP_LEFT_RIGHT)
-
-            #print("loading input code for training file:" + filename)
-            #print("code:"+codename)
-
             in_ = np.array(im, dtype=np.float32)
-            #in_ -= in_.mean()
-            #in_ /= in_.std()
             in_ /= 256
-            #in_ -= 1.0
             features = self.GetFeatureParts(in_, filename)
             if self.MIRROR_TO_ONE_SIDE and self.findPose(filename) < 0:
                 in_ = in_[:,::-1,:]
-
-            # in2_ = np.array(codeImg, dtype=np.float32)
-            # in2_  /= 256.0
-            #
-            # in3_ = np.concatenate((in_,in2_), 2)
             return in_, features
 
     def load_label_mask(self, filename, labelnum=-1):
 
         _, labelname = self.findSameIllumCodeLabelpath(filename)
-        #_, labelname = self.findBestIllumCodeImagepath(filename)
-        #codename, labelname = self.findCodeLabelpath(filename, labelnum)
-        #print("loading maskcode label for training file:" + filename)
-        #print("code:"+codename)
-        #print("label:"+labelname)
-        #print('loading...', labelname)
-        #im = Image.open(self.codeLabelDir + labelname)
         im = Image.open(self.dir + labelname)
-        # if self.GENERATE_MASK:
-        #     codeImg = Image.open(self.codeLabelDir + codename)
-        #     if (codeImg.size)[0] != IMAGE_SIZE:
-        #         codeImg = codeImg.resize((IMAGE_SIZE,IMAGE_SIZE))
-
-        #im = im.resize((IMAGE_SIZE,IMAGE_SIZE))
         if self.MIRROR_TO_ONE_SIDE and self.findPose(labelname) < 0:
             im = im.transpose(Image.FLIP_LEFT_RIGHT)
             if self.GENERATE_MASK:
@@ -391,19 +334,8 @@ class MultiPIE():
 
     def findSameIllumCodeLabelpath(self, fullpath):
         span = re_poseIllum.search(fullpath).span()
-        #print span
-        #camPosIllu =fullpath[span[0]+1:span[1]-1]
-        #print camPosIllu
-        #labelpath = fullpath.replace(camPosIllu, '051_06')
         tempath = list(fullpath)
         if self.LOAD_60_LABEL:
-            #camPos = fullpath[span[0]+1:span[0]+4]
-            # if(camPos == '240' or camPos == '010'): #+90/75
-            #     tempath[span[0]+1:span[0]+4] = '200' #+60
-            # elif (camPos == '120' or camPos == '110'): #-90/75
-            #     tempath[span[0]+1:span[0]+4] = '090' #-60
-            # else:
-            #     tempath[span[0]+1:span[0]+4] = '051'
             if self.findPose(fullpath) >= 0:
                 tempath[span[0]+1:span[0]+4] = '190' #+45
             else:
@@ -432,19 +364,6 @@ class MultiPIE():
                 reader = csv.reader(csvfile, delimiter=' ')
                 for ind,row in enumerate(reader):
                     trans_points[ind,:] = row
-        # else:
-        #     identity = int(filename[0:3])
-        #     lm = self.landmarks[identity]
-        #     trans_points[0,0] = (lm[(37-1)*2] + lm[(40-1)*2]) / 2
-        #     trans_points[0,1] = (lm[(37-1)*2+1] + lm[(40-1)*2+1]) / 2
-        #     trans_points[1,0] = (lm[(43-1)*2] + lm[(46-1)*2]) / 2
-        #     trans_points[1,1] = (lm[(43-1)*2+1] + lm[(46-1)*2+1]) / 2
-        #     trans_points[2,0] = lm[(31-1)*2]
-        #     trans_points[2,1] = lm[(31-1)*2+1]
-        #     trans_points[3,0] = lm[(49-1)*2]
-        #     trans_points[3,1] = lm[(49-1)*2+1]
-        #     trans_points[4,0] = lm[(55-1)*2]
-        #     trans_points[4,1] = lm[(55-1)*2+1]
         #print(trans_points)
         eyel_crop = np.zeros([EYE_H,EYE_W,3], dtype=np.float32);
         crop_y = int(trans_points[0,1] - EYE_H / 2);
@@ -458,14 +377,12 @@ class MultiPIE():
         crop_y_end = crop_y + EYE_H;
         crop_x = int(trans_points[1,0] - EYE_W / 2);
         crop_x_end = crop_x + EYE_W;
-        #import pdb; pdb.set_trace()
         eyer_crop[...] = img_resize[crop_y:crop_y_end,crop_x:crop_x_end,:];
 
 
         month_crop = np.zeros([MOUTH_H,MOUTH_W,3], dtype=np.float32);
         crop_y = int((trans_points[3,1] + trans_points[4,1]) // 2 - MOUTH_H / 2);
         crop_y_end = crop_y + MOUTH_H;
-        #print(crop_y, crop_y_end)
         crop_x = int((trans_points[3,0] + trans_points[4,0]) // 2 - MOUTH_W / 2);
         crop_x_end = crop_x + MOUTH_W;
         month_crop[...] = img_resize[crop_y:crop_y_end,crop_x:crop_x_end,:];

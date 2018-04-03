@@ -120,7 +120,6 @@ class DCGAN(object):
 
         # batch normalization : deals with poor initialization helps gradient flow
         random.seed()
-        self.DeepFacePath = '/data4/rui.huang/DeepFace.pickle'
         self.DeepFacePath = '/home/shu.zhang/ruihuang/data/DeepFace.pickle'
         self.dataset_name = dataset_name
         self.checkpoint_dir = checkpoint_dir
@@ -424,12 +423,6 @@ class DCGAN(object):
                             currentBatchEyer =  sample_eyer[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
                             currentBatchNose = sample_nose[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
                             currentBatchMouth = sample_mouth[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            # currentBatchLSamples = sample_labels[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            # currentBatchLEyel =  sample_leyel[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            # currentBatchLEyer =  sample_leyer[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            # currentBatchLNose = sample_lnose[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            # currentBatchLMouth = sample_lmouth[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            # currentBatchIden = sample_iden[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
                             samples = self.sess.run(
                                 self.sample_generator,
                                 feed_dict={ self.sample_images: currentBatchSamples,
@@ -446,9 +439,6 @@ class DCGAN(object):
                                                       './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_64')
                             savedoutput = save_images(samples[7], [100, 100],
                                                       './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_32')
-                            # savedoutput = save_images(samples[0], [100, 100],
-                            #                           './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_128_c')
-                            #print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
                         print("[{} completed{} and saved {}.]".format(config.sample_dir, savedtest*self.sample_run_num, savedoutput*self.sample_run_num))
 
                         #testing accuracy
@@ -524,10 +514,8 @@ class DCGAN(object):
                                     self.mouth_sam : sample_mouth[ind[0]:ind[1],...]}
                     )
                     colorgt = sample_images[ind[0]:ind[1],:,:,0:3]
-                    #colorgt.mean(axis=3, keepdims=True)
                     savedtest += save_images(colorgt, [128, 128],
                                              './{}/'.format(sample_dir),isOutput=False, filelist=filenames[ind[0]:ind[1]])
-                    #print(samples[5].shape)
                     savedoutput += save_images(samples[5], [128, 128],
                                                './{}/'.format(sample_dir),isOutput=True, filelist=filenames[ind[0]:ind[1]])
                     print("[{} completed{} and saved {}.]".format(sample_dir, savedtest, savedoutput))
@@ -573,12 +561,7 @@ class DCGAN(object):
         with tf.variable_scope("FeaturePredict") as scope:
             if reuse:
                 scope.reuse_variables()
-            #poselogits = linear(featvec[:,496:512], output_size=7, scope='poseLinear', bias_start=0.1, with_w=True)[0]
             identitylogits = linear(Dropout(featvec, keep_prob=0.3, is_training= not self.testing), output_size=340, scope='idenLinear', bias_start=0.1, with_w=True)[0]
-
-            # land_1 = lrelu(linear(featvec[:,448:496], output_size=24, scope='landmarkLinear1', bias_start=0.1, with_w=True)[0])
-            # land_2 = lrelu(linear(land_1, output_size=16, scope='landmarkLinear2', bias_start=0.1, with_w=True)[0])
-            #landmarks = linear(land_2, output_size=10, scope='landmarkLinear3', bias_start=0.1, with_w=True)[0]
             return None, identitylogits, None
 
     def discriminatorLocal(self, images, reuse=False):
@@ -588,47 +571,19 @@ class DCGAN(object):
 
             h0 = lrelu(conv2d(images, self.df_dim, name='d_h0_conv'))
             #64
-            #h0r1 = resblock(h0, name = "d_h0_conv_res1")
             h1 = lrelu(batch_norm(conv2d(h0, self.df_dim*2, name='d_h1_conv'), name='d_bn1'))
             #32
-            # h1r1 = resblock(h1, name = "d_h1_conv_res1")
-            # h1r2 = resblock(h1r1, name = "d_h1_conv_res2")
             h2 = lrelu(batch_norm(conv2d(h1, self.df_dim*4, name='d_h2_conv'), name='d_bn2'))
             #16
-            #add resblock to compensate layer depth
-            # h2r1 = resblock(h2, name = "d_h2_conv_res1")
-            # h2r2 = resblock(h2r1, name = "d_h2_conv_res2")
-            #h2r3 = resblock(h2r2, name = "d_h2_conv_res3")
             h3 = lrelu(batch_norm(conv2d(h2, self.df_dim*8, name='d_h3_conv'), name='d_bn3'))
             # #8x8
             h3r1 = resblock(h3, name = "d_h3_conv_res1")
-            # h3r2 = resblock(h3r1, name = "d_h3_conv_res2")
             h4 = lrelu(batch_norm(conv2d(h3r1, self.df_dim*8, name='d_h4_conv'), name='d_bn4'))
             h4r1 = resblock(h4, name = "d_h4_conv_res1")
-            # h4r2 = resblock(h4r1, name = "d_h4_conv_res2")
             h5 = conv2d(h4r1, 1, k_h=1, k_w=1, d_h=1, d_w=1, name='d_h5_conv')
             h6 = tf.reshape(h5, [self.batch_size, -1])
             #fusing 512 feature map to one layer prediction.
             return h6, h6 #tf.nn.sigmoid(h6), h6
-
-    # def discriminator(self, images, reuse=False):
-    #     with tf.variable_scope("discriminator") as scope:
-    #         if reuse:
-    #             scope.reuse_variables()
-    #
-    #         h0 = lrelu(conv2d(images, self.df_dim, name='d_h0_conv'))
-    #         #50x500
-    #         h1 = lrelu(batch_norm(conv2d(h0, self.df_dim*2, name='d_h1_conv'), name='d_bn1'))
-    #         #25x25
-    #         h2 = lrelu(batch_norm(conv2d(h1, self.df_dim*4, name='d_h2_conv'), name='d_bn2'))
-    #         #13x13
-    #         h3 = lrelu(batch_norm(conv2d(h2, self.df_dim*8, name='d_h3_conv'), name='d_bn3'))
-    #         #7x7
-    #         h4 = lrelu(batch_norm(conv2d(h3, self.df_dim*8, name='d_h4_conv'), name='d_bn4'))
-    #         #4x4
-    #         h5 = linear(tf.reshape(h4, [self.batch_size, -1]), 1, 'd_h4_lin')
-    #
-    #         return tf.nn.sigmoid(h5), h5
 
 
     def decoder(self, feat128, feat64, feat32, feat16, feat8, featvec,
@@ -645,51 +600,28 @@ class DCGAN(object):
             initial_64 = relu(deconv2d(initial_32, [batch_size, 64, 64, self.gf_dim // 4], name="initial64"))
             initial_128 = relu(deconv2d(initial_64, [batch_size, 128, 128, self.gf_dim // 8], name="initial128"))
 
-            # initial_8_i = tf.reshape(linear(featvec[:,0:448], output_size=8*8*14,scope='initial8_i', bias_start=0.1, with_w=True)[0], [batch_size, 8, 8, 14])
-            # initial_32_i = tf.reshape(linear(featvec[:,0:448], output_size=32*32*3,scope='initial32_i', bias_start=0.1, with_w=True)[0], [batch_size, 32, 32, 3])
-            # initial_64_i = tf.reshape(linear(featvec[:,0:448], output_size=64*64*3, scope='initial64_i', bias_start=0.1, with_w=True)[0], [batch_size, 64, 64, 3])
-            # initial_128_i = tf.reshape(linear(featvec[:,0:448], output_size=128*128*3, scope='initial128_i', bias_start=0.1, with_w=True)[0], [batch_size, 128, 128, 3])
-            # initial_8_p = tf.reshape(linear(featvec[:,448:512], output_size=8*8*2,scope='initial8_p', bias_start=0.1, with_w=True)[0], [batch_size, 8, 8, 2])
-            # initial_32_p = tf.reshape(linear(featvec[:,448:512], output_size=32*32*1,scope='initial32_p', bias_start=0.1, with_w=True)[0], [batch_size, 32, 32, 1])
-            # initial_64_p = tf.reshape(linear(featvec[:,448:512], output_size=64*64*1, scope='initial64_p', bias_start=0.1, with_w=True)[0], [batch_size, 64, 64, 1])
-            # initial_128_p = tf.reshape(linear(featvec[:,448:512], output_size=128*128*1, scope='initial128_p', bias_start=0.1, with_w=True)[0], [batch_size, 128, 128, 1])
-            # initial_8 = tf.concat_v2([initial_8_i, initial_8_p], 3)
-            # initial_32 = tf.concat_v2([initial_32_i, initial_32_p], 3)
-            # initial_64 = tf.concat_v2([initial_64_i, initial_64_p], 3)
-            # initial_128 = tf.concat_v2([initial_128_i, initial_128_p], 3)
-
             before_select8 = resblock(tf.concat_v2([initial_8, feat8], 3), k_h=2, k_w=2, name = "select8_res_1")
             #selection T module
-            #after_select8 = lrelu(batch_norm(conv2d(before_select8, sel_feat_capacity*8, k_h=2, k_w=2, d_h=1, d_w=1, name="select8_conv"),name="select8_bnc"))
-            #check_sel8 = tf.nn.tanh(conv2d(after_select8, 3, k_h=2, k_w=2, d_h=1, d_w=1, name="select8_check"))
             reconstruct8 = resblock(resblock(before_select8, k_h=2, k_w=2, name="dec8_res1"), k_h=2, k_w=2, name="dec8_res2")
 
             #selection F module
             reconstruct16_deconv = relu(batch_norm(deconv2d(reconstruct8, [batch_size, 16, 16, self.gf_dim*8], name="g_deconv16"), name="g_bnd1"))
             before_select16 = resblock(feat16, name = "select16_res_1")
-            #after_select16 = lrelu(batch_norm(conv2d(before_select16, sel_feat_capacity*8, d_h=1, d_w=1, name="select16_conv"),name="select16_bnc"))
-            #check_sel16 = tf.nn.tanh(conv2d(after_select16, 3, d_h=1, d_w=1, name="select16_check"))
             reconstruct16 = resblock(resblock(tf.concat_v2([reconstruct16_deconv, before_select16], 3), name="dec16_res1"), name="dec16_res2")
 
             reconstruct32_deconv = relu(batch_norm(deconv2d(reconstruct16, [batch_size, 32, 32, self.gf_dim*4], name="g_deconv32"), name="g_bnd2"))
             before_select32 = resblock(tf.concat_v2([feat32, g32_images_with_code, initial_32], 3), name = "select32_res_1")
-            #after_select32 = lrelu(batch_norm(conv2d(before_select32, sel_feat_capacity*4, d_h=1, d_w=1, name="select32_conv"),name="select32_bnc"))
-            #check_sel32 = tf.nn.tanh(conv2d(after_select32, 3, d_h=1, d_w=1, name="select32_check"))
             reconstruct32 = resblock(resblock(tf.concat_v2([reconstruct32_deconv, before_select32], 3), name="dec32_res1"), name="dec32_res2")
             img32 = tf.nn.tanh(conv2d(reconstruct32, 3, d_h=1, d_w=1, name="check_img32"))
 
             reconstruct64_deconv = relu(batch_norm(deconv2d(reconstruct32, [batch_size, 64, 64, self.gf_dim*2], name="g_deconv64"), name="g_bnd3"))
             before_select64 = resblock(tf.concat_v2([feat64, g64_images_with_code, initial_64], 3), k_h=5, k_w=5, name = "select64_res_1")
-            #after_select64 = lrelu(batch_norm(conv2d(before_select64, sel_feat_capacity*2, k_h=5, k_w=5, d_h=1, d_w=1, name="select64_conv"),name="select64_bnc"))
-            #check_sel64 = tf.nn.tanh(conv2d(after_select64, 3, d_h=1, d_w=1, name="select64_check"))
             reconstruct64 = resblock(resblock(tf.concat_v2([reconstruct64_deconv, before_select64,
                                                             tf.image.resize_bilinear(img32, [64,64])], 3), name="dec64_res1"), name="dec64_res2")
             img64 = tf.nn.tanh(conv2d(reconstruct64, 3, d_h=1, d_w=1, name="check_img64"))
 
             reconstruct128_deconv = relu(batch_norm(deconv2d(reconstruct64, [batch_size, 128, 128, self.gf_dim], name="g_deconv128"), name="g_bnd4"))
             before_select128 = resblock(tf.concat_v2([feat128, initial_128, g128_images_with_code],3), k_h = 7, k_w = 7, name = "select128_res_1")
-            #after_select128 = lrelu(batch_norm(conv2d(before_select128, sel_feat_capacity, k_h = 7, k_w = 7, d_h=1, d_w=1, name="select128_conv"), name="select128_bnc"))
-            #check_sel128 = tf.nn.tanh(conv2d(after_select128, 3, d_h=1, d_w=1, name="select128_check"))
             reconstruct128 = resblock(tf.concat_v2([reconstruct128_deconv, before_select128,
                                                     self.partCombiner(eyel, eyer, nose, mouth),
                                                     self.partCombiner(c_eyel, c_eyer, c_nose, c_mouth),
@@ -725,8 +657,6 @@ class DCGAN(object):
             c4r = resblock(c4, name="g_conv4_res")
             # c5 = lrelu(batch_norm(conv2d(c4r, self.gf_dim*8, name='g_conv5'),name="g_bnc5"))
             # #4x4
-            # c5r = resblock(c5, name="g_conv5_res")
-            # c6 = lrelu(batch_norm(conv2d(c5r, self.gf_dim*8, k_h=2, k_w=2, name='g_conv6'),name="g_bnc6"))
             # #2x2
             # c6r = resblock(c6,k_h=2, k_w=2, name="g_conv6_res")
             c4r2 = resblock(c4r, name="g_conv4_res2")
@@ -735,9 +665,7 @@ class DCGAN(object):
             c4r4_l = tf.reshape(c4r4,[batch_size, -1])
             c7_l = linear(c4r4_l, output_size=512,scope='feature', bias_start=0.1, with_w=True)[0]
             c7_l_m = tf.maximum(c7_l[:, 0:256], c7_l[:, 256:])
-            #c7 = lrelu(batch_norm(conv2d(c6r, self.gf_dim*8, k_h=2, k_w=2, name='g_conv7'),name="g_bnc7"))
 
-            #c7_l = tf.reshape(c7,[batch_size, -1])
             return c0r, c1r, c2r, c3r, c4r4, c7_l_m
 
     def partRotator(self, images, name, batch_size=10, reuse=False):
@@ -809,18 +737,14 @@ class DCGAN(object):
                                              self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,})
         errtv = self.tv_loss.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels,
                                    self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,})
-        #errCondL12 = self.condErrL12.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels,
-        #                                   self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,})
-        #errCondL23 = self.condErrL23.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels,
-        #                                   self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,})
+
         errG_sym = self.symErrL1.eval({self.images_with_code: batch_images_with_code,
                                        self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,})
         errG2_sym = self.symErrL2.eval({self.images_with_code: batch_images_with_code,
                                         self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,})
         errG3_sym = self.symErrL3.eval({self.images_with_code: batch_images_with_code,
                                         self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,})
-        # errcheck8 = self.weightedErr_check8.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels, })
-        # errcheck16 = self.weightedErr_check16.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels, })
+
         errcheck32 = 0#self.weightedErr_check32.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels, })
         errcheck64 = 0#self.weightedErr_check64.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels, })
         errcheck128 = 0#self.weightedErr_check128.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels, })
@@ -829,10 +753,8 @@ class DCGAN(object):
         erreyer = self.eyer_loss.eval({self.eyel: batch_eyel, self.eyer: batch_eyer, self.eyer_label: batch_eyer_label})
         errnose = self.nose_loss.eval({self.nose: batch_nose, self.nose_label: batch_nose_label})
         errmouth = self.mouth_loss.eval({self.mouth : batch_mouth, self.mouth_label: batch_mouth_label})
-
-        # errpose = self.poseloss.eval({self.images_with_code: batch_images_with_code, self.poselabels : batch_pose,})
         erriden = self.idenloss.eval({self.images_with_code: batch_images_with_code, self.idenlabels : batch_iden,})
-        # errmark = self.mark_regression_loss.eval({self.images_with_code: batch_images_with_code, self.landmarklabels : batch_landmarks,})
+
 
         if 'f' in MODE:
             errDv = self.dv_loss.eval({self.images_with_code: batch_images_with_code, self.labels : batch_labels,
@@ -1055,8 +977,6 @@ class DCGAN(object):
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
-        #print('Layer name: %s' % name)
-        #print('Layer shape: %s' % str(shape))
         var = tf.get_variable(name="filter", initializer=init, shape=shape)
         return var
 
@@ -1065,7 +985,6 @@ class DCGAN(object):
         shape = self.data_dict[name][1].shape
         init = tf.constant_initializer(value=bias_wights,
                                        dtype=tf.float32)
-        #print('Layer bias shape: %s' % str(shape))
         var = tf.get_variable(name="biases", initializer=init, shape=shape)
         return var
 
@@ -1073,8 +992,6 @@ class DCGAN(object):
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
-        #print('Layer name: %s' % name)
-        #print('Layer shape: %s' % str(shape))
         var = tf.get_variable(name="weights", initializer=init, shape=shape)
         return var
 

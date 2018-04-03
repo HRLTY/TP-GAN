@@ -35,16 +35,19 @@ Here are random examples of 10 testing image pairs for each degree.
 
 It was initially written in Tensorflow 0.12.
 
-This is an initial release of code, which may not be fully tested. Refinement, input data example, pre-trained models, and precomputed testing image features will come later.
+This is an improved version than the one used in paper.
 
 The input is cropped with the Matlab script `face_db_align_single_custom.m`, which accepts 5 keypoints and outputs a cropped image and transformed keypoints.
 
 Some example cropping outputs is shown in folder `data-example`.
 
+The 45-90 degree images are used to train our 90-degree model only.
+
 The keypoints can be extracted from off-the-shelf landmark detectors, e.g. 'Zhang et al. Combining Data-driven and Model-driven Methods for Robust Facial Landmark Detection, 2016'. The synthesis performance is similar to using manually labelled keypoints.
 
 We thank Xiang Wu for providing the [face feature network](https://github.com/AlfredXiangWu/face_verification_experiment). We load it as `DeepFace` in the code, the weights are from a custom Light-CNN cafeemodel file.
 
+Our implementation borrowed code from the [dcgan repo](https://github.com/carpedm20/DCGAN-tensorflow)
 
 ### Citation and Contact
 
@@ -63,3 +66,4 @@ Any suggestion and/or comment would be valuable. Please send an email to Rui at 
 ### License
 
 This code is freely available for free non-commercial use, and may be redistributed under the conditions set by the license. Please, see the [license](https://github.com/HRLTY/TP-GAN/blob/master/LICENSE) for further details. For commercial queries, please contact [Rui Huang](http://www.andrew.cmu.edu/user/ruih2/) and [Ran He](http://www.nlpr.ia.ac.cn/english/irds/People/rhe.html).
+
