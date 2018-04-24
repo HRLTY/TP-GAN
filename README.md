@@ -10,7 +10,7 @@ Here are some examples from the paper.![image](images/ownsynthesis.jpg)
 
 Synthesized  testing images of all poses, corresponding illumination in Setting 2 (and its cropped input) in MultiPIE can be obtained here [Google Drive](https://drive.google.com/file/d/1Kx0sMjFTzLX3-rZ03TAVBAj-gcd9rJrd/view?usp=sharing). 
 
-Synthesized images for other illumination condition and/or training set can be obtained upon request. If you would like to access the original MultiPIE dataset, please contact [MultiPIE](http://www.cs.cmu.edu/afs/cs/project/PIE/MultiPie/Multi-Pie/Home.html).
+FAQ: **Synthesized**(not the original) images for other illumination condition and/or training set can be obtained upon request. Unfortunately, I cannot redistribute the original dataset due to copyright. If you would like to access the original MultiPIE dataset, please contact [MultiPIE](http://www.cs.cmu.edu/afs/cs/project/PIE/MultiPie/Multi-Pie/Home.html).
 
 ### Random examples
 
