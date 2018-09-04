@@ -43,12 +43,13 @@ Some example cropping outputs is shown in folder `data-example`.
 
 Our 90-degree model only used 45-90 degree images for training. Other models we trained didn't use 90 degree images. 90 degree images' left and right eye patches coincide.
 
-The 5 keypoints can be extracted from off-the-shelf landmark detectors, e.g. 'Zhang et al. Combining Data-driven and Model-driven Methods for Robust Facial Landmark Detection, 2016'. The synthesis performance is similar to using manually labelled keypoints.
+The 5 keypoints can be extracted from off-the-shelf landmark detectors, e.g. 'Zhang et al. Combining Data-driven and Model-driven Methods for Robust Facial Landmark Detection, 2016'. The synthesis performance is similar to using manually labelled keypoints. See released keypoint files below.
 
 We thank Xiang Wu for providing the [face feature network](https://github.com/AlfredXiangWu/face_verification_experiment). We load it as `DeepFace` in the code, the weights are from a custom Light-CNN cafeemodel file. Our implementation borrowed code from the [dcgan repo](https://github.com/carpedm20/DCGAN-tensorflow).
 
-Update 0.1:
+Update 0.11:
 
+- Releasing *5 keypoint locations* for MultiPIE Session 1-4 dataset. Please download from [here](https://drive.google.com/open?id=1Kx0sMjFTzLX3-rZ03TAVBAj-gcd9rJrd). Most of the 60-90 degrees images are labelled manually, others come from MTCNNv2 detector. If you like it, please consider citing our paper.
 - Adding `DeepFace168.pickle` weights file for Light-CNN. Please note this is an improved version than the one originally used in the experiment.
 
 ### Citation and Contact
