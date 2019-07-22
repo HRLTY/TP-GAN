@@ -234,7 +234,8 @@ class MultiPIE():
             if self.MIRROR_TO_ONE_SIDE and self.findPose(filename) < 0:
                 in_ = in_[:,::-1,:]
             return in_, features
-
+    
+    #训练使用,输入图片的路径,返回侧面的照片,并用GetFeatureParts得到它的各个部位并返回
     def load_label_mask(self, filename, labelnum=-1):
 
         _, labelname = self.findSameIllumCodeLabelpath(filename)
