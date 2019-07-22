@@ -173,13 +173,16 @@ class MultiPIE():
             masks = np.empty([batch_size, IMAGE_SIZE, IMAGE_SIZE, 3])
         else:
             masks = None
+            
+        #verifyImages
         if self.RANDOM_VERIFY:
             verifyImages = np.empty([batch_size, IMAGE_SIZE, IMAGE_SIZE, 3])
             #verifyLabels = np.empty([batch_size, 1], dtype=np.float32)
             verifyLabels = np.empty([batch_size], dtype=np.int32)
         else:
             verifyImages = None; verifyLabels = None
-
+            
+        #循环一个batchsize,返回的结果也都是一个batchsize的
         for i in range(batch_size):
             if imageRange != -1:
                 while True:
@@ -194,10 +197,11 @@ class MultiPIE():
             images[i, ...], feats = self.load_image(self.indices[self.idx])
             filename = self.indices[self.idx]
             labels[i,...], _, leyel[i,...], leyer[i,...], lnose[i,...], lmouth[i, ...] = self.load_label_mask(filename)
-
+            #poselabel是图片对应摄像机的角度
             pose = abs(self.findPose(filename))
             poselabels[i] = int(pose/15)
             identity = int(filename[0:3])
+            #返回的idenlabel由文件名的1到4位定义
             idenlabels[i] = identity
             landmarklabels[i,:] = feats[0].flatten()
             eyel[i,...] = feats[1]
@@ -205,6 +209,7 @@ class MultiPIE():
             nose[i,...] = feats[3]
             mouth[i, ...] = feats[4]
             self.updateidx()
+       
         return images, labels, masks, verifyImages, verifyLabels, poselabels, idenlabels, landmarklabels,\
                eyel, eyer, nose, mouth, leyel, leyer, lnose, lmouth
 
