@@ -340,7 +340,7 @@ class MultiPIE():
                 print('damn labelnum bug!')
         return (codepath, labelpath)
     
-   
+   #输入图片路径,根据文件名,返回对应的监督图片
     def findSameIllumCodeLabelpath(self, fullpath):
         span = re_poseIllum.search(fullpath).span()
         tempath = list(fullpath)
