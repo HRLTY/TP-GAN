@@ -276,7 +276,8 @@ class MultiPIE():
         #background area weights 0.2, face area weights 1.0
 
         return label, mask, feats
-
+    
+    #这个函数没有被调用过
     def load_label_mask_with_veri(self, filename, labelnum=-1):
         label, mask = self.load_label_mask(filename, labelnum)
 
