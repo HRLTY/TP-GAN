@@ -288,7 +288,8 @@ class MultiPIE():
                 return label, mask, veryImArray, int(randomSubjectPath[0:3])
         else:
             return label, mask, None, None
-
+        
+    #根据图片名字,返回同一组里光照条件最好的图片路径
     def findBestIllumCodeImagepath(self, fullpath):
         span = re_pose.search(fullpath).span()
         camPos = list(fullpath[span[0]+1:span[1]-1])
@@ -332,7 +333,8 @@ class MultiPIE():
             if replace == None:
                 print('damn labelnum bug!')
         return (codepath, labelpath)
-
+    
+   
     def findSameIllumCodeLabelpath(self, fullpath):
         span = re_poseIllum.search(fullpath).span()
         tempath = list(fullpath)
@@ -347,6 +349,7 @@ class MultiPIE():
         codepath = str(labelpath).replace('cropped', 'code')
         return (codepath, labelpath)
 
+    #根据图片名字来确定此图片的拍摄角度
     def findPose(self, fullpath):
         span = re_pose.search(fullpath).span()
         camPos = list(fullpath[span[0]+1:span[1]-1])
@@ -355,6 +358,8 @@ class MultiPIE():
         #get 01_0 like string
         return self.cameraPositions[camPos][0]
 
+    
+    #输入已裁剪的图片的Image.open格式和图片名,返回裁剪的眼嘴鼻和标注的眼嘴鼻的位置
     def GetFeatureParts(self, img_resize, filename, label=False):
         #crop four parts
         trans_points = np.empty([5,2],dtype=np.int32)
