@@ -58,6 +58,7 @@ class MultiPIE():
         self.MIRROR_TO_ONE_SIDE = MIRROR_TO_ONE_SIDE
         self.RANDOM_VERIFY = RANDOM_VERIFY
         self.GENERATE_MASK = GENERATE_MASK
+        #key->value第一个是角度,第二个是光线最好的编号
         self.cameraPositions = {'24_0': (+90, '10'),'01_0' : (+75, '08'), '20_0' : (+60, '08'), '19_0' : (+45, '09'), '04_1' : (+30, '07'), '05_0' : (+15, '06'), #left
                     '05_1' : (0,'06'), #center
                     '14_0' : (-15,'06'), '13_0' : (-30, '05'), '08_0' : (-45, '15'),'09_0' : (-60, '15'),'12_0' : (-75, '15'),'11_0' : (-90, '15')} #right
