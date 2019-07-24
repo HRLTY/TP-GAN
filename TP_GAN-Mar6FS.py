@@ -561,7 +561,9 @@ class DCGAN(object):
         with tf.variable_scope("FeaturePredict") as scope:
             if reuse:
                 scope.reuse_variables()
+            #identity的数目,训练中identity编号不能超过这个
             identitylogits = linear(Dropout(featvec, keep_prob=0.3, is_training= not self.testing), output_size=340, scope='idenLinear', bias_start=0.1, with_w=True)[0]
+            
             return None, identitylogits, None
 
     def discriminatorLocal(self, images, reuse=False):
