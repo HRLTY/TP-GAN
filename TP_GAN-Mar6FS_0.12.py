@@ -10,7 +10,7 @@ from six.moves import xrange
 from ops import *
 from utils import *
 
-from net_input_everything_featparts import *
+from net_input_everything_featparts_0_12 import *
 from time import localtime, strftime
 import random
 import pickle
