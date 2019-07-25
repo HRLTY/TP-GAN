@@ -7,6 +7,7 @@ tensorflow0.12要求CUDA版本Cuda 8.0 and CudNN 5.1?
 sudo nvidia-docker pull nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04能跑通  
 拉取镜像后需要:  
 1.apt-get update后apt-get install python3-dev python3-pip vim  
-2.再pip3 install tensorflow==0.12 scipy pillow  
+2.再pip3 install tensorflow-gpu==0.12 scipy pillow  
 3.下载代码,放数据集后修改下路径
-# 其余见https://github.com/HRLTY/TP-GAN
+## 数据集相关信息见https://github.com/HRLTY/TP-GAN
+记得修改下identical output的数目
