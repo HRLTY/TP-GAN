@@ -4,7 +4,7 @@ mtcnn的模型不能在tf0.12下跑,用5pt文件做下中转
 没用到face_db_align_single_custom.m
 tensorflow0.12要求CUDA版本Cuda 8.0 and CudNN 5.1?
 # 使用镜像运行
-sudo nvidia-dcoker pull nvidia/cuda:8.-cudnn5-devel-ubuntu16.04能跑通  
+sudo nvidia-docker pull nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04能跑通  
 拉取镜像后需要:  
 1.apt-get update后apt-get install python3-dev python3-pip vim  
 2.再pip3 install tensorflow==0.12 scipy pillow  
