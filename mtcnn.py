@@ -53,26 +53,36 @@ def test_image(PATH):
                 csvfile.write(row)
         csvfile.close()
 
-
-
-def test_video(path):
+def create_img(PATH):
     mtcnn = MTCNN('./mtcnn.pb')
-    cap=cv2.VideoCapture(path)
-    while True:
-        ret,img=cap.read()
-        if not ret:
-            break
-        bbox, scores, landmarks = mtcnn.detect(img)
-        #print('total box:', len(bbox))
-        for box, pts in zip(bbox, landmarks):
-            box = box.astype('int32')
-            img = cv2.rectangle(img, (box[1], box[0]), (box[3], box[2]), (255, 0, 0), 3)
-            pts = pts.astype('int32')
-            for i in range(5):
-                img = cv2.circle(img, (pts[i+5], pts[i]), 1, (0, 255, 0), 2)
-        cv2.imshow('img', img)
-        key = cv2.waitKey(1)
-        if key ==ord('q'):
-            break
+    csvfile = open('test_tem.5pt', "w")
+    img_rec = cv2.imread(PATH)
+    data=[]
+    bbox, scores, landmarks = mtcnn.detect(img_rec)
+    for box, pts in zip(bbox, landmarks):
+        bbox=bbox.astype('int32')
+        pts = pts.astype('int32')
+        print([int(box[0]),int(box[2]),int(box[1]),int(box[3])])
+        for i in range(5):
+            row = str(pts[i+5]) + ' '+ str(pts[i])+'\n'
+            #img=cv2.circle(img,(pts[i+5],pts[i]),1,(0,255,0),2)
+    img_rec=img_rec[int(box[0])-20:int(box[2])+20,int(box[1])-50:int(box[3])+50]
+    img_rec=cv2.resize(img_rec,(128,128))
+    cv2.imwrite('test_tem.png',img_rec)
+    bbox, scores, landmarks = mtcnn.detect(img_rec)
+    for box, pts in zip(bbox, landmarks):
+        pts = pts.astype('int32')
+        for i in range(5):
+            row = str(pts[i+5]) + ' '+ str(pts[i])+'\n'
+            img_vis=cv2.circle(img_rec,(pts[i+5],pts[i]),1,(0,255,0),2)
+            csvfile.write(row)
+    cv2.imwrite('test_tem_vis.png',img_vis)
+    csvfile.close()
+
+def cut(PATH):
+    img = cv2.imread(PATH)
+    #img=img[]
+    cv2.imwrite('test_tem.png',img)
+
 if __name__ == '__main__':
-    test_image('/home/ubuntu3000/pt/TP-GAN/data/45')
+    create_img('index.jpeg')

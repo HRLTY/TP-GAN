@@ -117,73 +117,8 @@ class MultiPIE():
         else:
             return images, filenames, eyel, eyer, nose, mouth, None, None, None, None, None, None
 
-    def next_image_and_label_mask_batch(self, batch_size, imageRange=-1,imageRangeLow = 0, labelnum=None):
-        """Construct a batch of images and labels masks.
-
-        Args:
-        batch_size: Number of images per batch.
-        shuffle: boolean indicating whether to use a shuffling queue.
-        Returns:
-        ndarray feed.
-        images: Images. 4D of [batch_size, height, width, 6] size.
-        labels: Labels. 4D of [batch_size, height, width, 3] size.
-        masks: masks. 4D of [batch_size, height, width, 3] size.
-        verifyImages: Images. 4D of [batch_size, height, width, 3] size.
-        verifyLabels: 1D of [batch_size] 0 / 1 classification label
-        """
-        assert batch_size >= 1
-        images = np.empty([batch_size, IMAGE_SIZE, IMAGE_SIZE, 3])
-        labels = np.empty([batch_size, IMAGE_SIZE, IMAGE_SIZE, 3])
-
-        poselabels = np.empty([batch_size],dtype=np.int32)
-        idenlabels = np.empty([batch_size],dtype=np.int32)
-        landmarklabels = np.empty([batch_size, 5*2],dtype=np.float32)
-        eyel = np.empty([batch_size, EYE_H, EYE_W, 3], dtype=np.float32)
-        eyer = np.empty([batch_size, EYE_H, EYE_W, 3], dtype=np.float32)
-        nose = np.empty([batch_size, NOSE_H, NOSE_W, 3], dtype=np.float32)
-        mouth = np.empty([batch_size, MOUTH_H, MOUTH_W, 3],dtype=np.float32)
-        leyel = np.empty([batch_size, EYE_H, EYE_W, 3], dtype=np.float32)
-        leyer = np.empty([batch_size, EYE_H, EYE_W, 3], dtype=np.float32)
-        lnose = np.empty([batch_size, NOSE_H, NOSE_W, 3], dtype=np.float32)
-        lmouth = np.empty([batch_size, MOUTH_H, MOUTH_W, 3],dtype=np.float32)
 
 
-        masks = None
-        if self.RANDOM_VERIFY:
-            verifyImages = np.empty([batch_size, IMAGE_SIZE, IMAGE_SIZE, 3])
-            verifyLabels = np.empty([batch_size], dtype=np.int32)
-        else:
-            verifyImages = None; verifyLabels = None
-
-        for i in range(batch_size):
-            if imageRange != -1:
-                if True:
-                    self.updateidx()
-            images[i, ...], feats = self.load_image(self.indices[self.idx])
-            filename = self.indices[self.idx]
-            labels[i,...], _, leyel[i,...], leyer[i,...], lnose[i,...], lmouth[i, ...] = self.load_label_mask(filename)
-
-            pose = abs(self.findPose(filename))
-            poselabels[i] = int(pose/15)
-            identity = int(filename[0:3])
-            idenlabels[i] = identity
-            landmarklabels[i,:] = feats[0].flatten()
-            eyel[i,...] = feats[1]
-            eyer[i,...] = feats[2]
-            nose[i,...] = feats[3]
-            mouth[i, ...] = feats[4]
-            self.updateidx()
-        #labels是什么,masks是什么,verifyImages和images区别,poselabels是位置角度吗
-        return images, labels, masks, verifyImages, verifyLabels, poselabels, idenlabels, landmarklabels,\
-               eyel, eyer, nose, mouth, leyel, leyer, lnose, lmouth
-
-    def updateidx(self):
-        if self.random:
-            self.idx = random.randint(0, len(self.indices)-1)
-        else:
-            self.idx += 1
-            if self.idx == len(self.indices):
-                self.idx = 0
     def load_image(self, filename):
         #读取一个图片
             """
@@ -216,8 +151,7 @@ class MultiPIE():
         trans_points = np.empty([5,2],dtype=np.int32)
         #把这里改成mtcnn
         if True:
-            path_5pt='/home/ubuntu3000/pt/TP-GAN/data/45_5pt/201_04_01_190_09_cropped.5pt'
-            featpath = os.path.join('/home/ubuntu3000/pt/TP-GAN/data/45_5pt',filename.replace('.png','.5pt'))
+            path_5pt='./test_tem.5pt'
             featpath = path_5pt
             with open(featpath, 'r') as csvfile:
                 reader = csv.reader(csvfile, delimiter=' ')

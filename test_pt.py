@@ -323,7 +323,7 @@ class DCGAN(object):
         ##这里调整下
         sample_images = np.empty([self.test_batch_size, IMAGE_SIZE, IMAGE_SIZE, 3])
         sample_images[0, ...], feats = data.load_image(self.test_filename)
-        #这里不知道有没有加载成功
+
         sample_eyel = np.empty([self.test_batch_size, EYE_H, EYE_W, 3], dtype=np.float32)
         sample_eyer = np.empty([self.test_batch_size, EYE_H, EYE_W, 3], dtype=np.float32)
         sample_nose = np.empty([self.test_batch_size, NOSE_H, NOSE_W, 3], dtype=np.float32)
@@ -359,17 +359,8 @@ class DCGAN(object):
 
                 print('ok')
                 imageio.imwrite('./train_pt.png',samples[5][0,:,:,:])
-                '''
-                savedtest = save_images(currentBatchSamples if WITHOUT_CODEMAP else currentBatchSamples[...,0:3], [100, 100],
-                                        './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i), suffix='')
-                savedoutput = save_images(samples[5], [100, 100],
-                                         './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_128')
-                savedoutput = save_images(samples[6], [100, 100],
-                                          './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_64')
-                savedoutput = save_images(samples[7], [100, 100],
-                                          './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_32') 
-                '''
-            print("[{} completed{} and saved {}.]".format(config.sample_dir, savedtest*self.sample_run_num, savedoutput*self.sample_run_num))
+
+            print("[ completed and saved ]")
               
         else:
 
@@ -914,7 +905,7 @@ def main(_):
                       is_crop=FLAGS.is_crop,
                       checkpoint_dir=FLAGS.checkpoint_dir,
                       sample_dir=FLAGS.sample_dir)
-        dcgan.test_filename='/home/ubuntu3000/pt/TP-GAN/data/45/201_04_01_190_09_cropped.png'
+        dcgan.test_filename='test_tem.png'
         dcgan.train(FLAGS)
 
 if __name__ == '__main__':
