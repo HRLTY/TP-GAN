@@ -10,7 +10,7 @@ from six.moves import xrange
 from ops import *
 from utils import *
 
-from net_input_everything_featparts_0_12 import *
+from net_input_everything_featparts import *
 from time import localtime, strftime
 import random
 import pickle
@@ -58,8 +58,8 @@ flags = tf.app.flags
 flags.DEFINE_integer("epoch", 250, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 1e-4, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.9, "Momentum term of adam [0.5]")
-flags.DEFINE_integer("train_size", 1200, "The size of train images [np.inf]")
-flags.DEFINE_integer("batch_size", 20, "The size of batch images [64]")
+flags.DEFINE_integer("train_size", 1156, "The size of train images [np.inf]")
+flags.DEFINE_integer("batch_size", 4, "The size of batch images [64]")
 flags.DEFINE_integer("image_size", 128, "The size of image to use (will be center cropped) [108]")
 flags.DEFINE_integer("output_size", 128, "The size of the output images to produce [64]")
 flags.DEFINE_integer("c_dim", 3, "Dimension of image color. [3]")
@@ -67,8 +67,8 @@ flags.DEFINE_string("dataset", "MultiPIE", "The name of dataset [celebA, mnist, 
 flags.DEFINE_string("checkpoint_dir", "checkpoint60", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("is_train", True, "True for training, False for testing [False]")
-flags.DEFINE_boolean("is_crop", False, "True for training, False for testing [False]")
-flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
+flags.DEFINE_boolean("is_crop", True, "True for training, False for testing [False]")
+flags.DEFINE_boolean("visualize", True, "True for visualizing, False for nothing [False]")
 FLAGS = flags.FLAGS
 
 class DCGAN(object):
@@ -91,11 +91,11 @@ class DCGAN(object):
             c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
         """
         self.test_batch_size = batch_size
-        self.save_interval = 300
+        self.save_interval = 500
         self.sample_interval = 150
         self.sess = sess
         self.is_grayscale = (c_dim == 1)
-        self.batch_size = 10
+        self.batch_size = FLAGS.batch_size
         self.sample_run_num = 15
         self.testing = False
         self.testingphase = 'FS'
