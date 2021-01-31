@@ -10,7 +10,7 @@ from six.moves import xrange
 from ops import *
 from utils import *
 
-from net_input_everything_featparts import *
+from pt_test_net_input_everything_featparts_ import *
 from time import localtime, strftime
 import random
 import pickle
@@ -21,7 +21,8 @@ import shutil
 from utils import pp, visualize, to_json
 
 import tensorflow as tf
-
+import logging#pt
+import imageio
 #These parameters should provide a good initialization, but if for specific refinement, you can adjust them during training.
 
 ALPHA_ADVER = 2e1
@@ -58,17 +59,18 @@ flags = tf.app.flags
 flags.DEFINE_integer("epoch", 250, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 1e-4, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.9, "Momentum term of adam [0.5]")
-flags.DEFINE_integer("train_size", np.inf, "The size of train images [np.inf]")
-flags.DEFINE_integer("batch_size", 20, "The size of batch images [64]")
+flags.DEFINE_integer("train_size", 1156, "The size of train images [np.inf]")
+flags.DEFINE_integer("batch_size", 4, "The size of batch images [64]")
 flags.DEFINE_integer("image_size", 128, "The size of image to use (will be center cropped) [108]")
 flags.DEFINE_integer("output_size", 128, "The size of the output images to produce [64]")
 flags.DEFINE_integer("c_dim", 3, "Dimension of image color. [3]")
 flags.DEFINE_string("dataset", "MultiPIE", "The name of dataset [celebA, mnist, lsun]")
-flags.DEFINE_string("checkpoint_dir", "checkpoint60", "Directory name to save the checkpoints [checkpoint]")
+flags.DEFINE_string("checkpoint_dir", "/home/ubuntu3000/pt/TP-GAN/checkpoint60/MultiPIE_2_128", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("is_train", True, "True for training, False for testing [False]")
-flags.DEFINE_boolean("is_crop", False, "True for training, False for testing [False]")
-flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
+flags.DEFINE_boolean("is_crop", True, "True for training, False for testing [False]")
+flags.DEFINE_boolean("visualize", True, "True for visualizing, False for nothing [False]")
+flags.DEFINE_integer("test_batch_size", 1, "test batch size. [1]")
 FLAGS = flags.FLAGS
 
 class DCGAN(object):
@@ -90,22 +92,20 @@ class DCGAN(object):
             dfc_dim: (optional) Dimension of discrim units for fully connected layer. [1024]
             c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
         """
-        self.test_batch_size = batch_size
-        self.save_interval = 300
+        self.save_interval = 500
         self.sample_interval = 150
         self.sess = sess
         self.is_grayscale = (c_dim == 1)
-        self.batch_size = 10
+        self.batch_size = FLAGS.batch_size
         self.sample_run_num = 15
         self.testing = False
         self.testingphase = 'FS'
         self.testimg = True
         if self.testing:
-            #self.batch_size = 10
             self.testingphase = '60'#'gt50'
             self.sample_run_num = 99999999
 
-        self.test_batch_size = self.batch_size
+        self.test_batch_size = 1
         self.image_size = image_size
         self.sample_size = sample_size
         self.output_size = output_size
@@ -120,11 +120,13 @@ class DCGAN(object):
 
         # batch normalization : deals with poor initialization helps gradient flow
         random.seed()
-        self.DeepFacePath = '/home/shu.zhang/ruihuang/data/DeepFace.pickle'
+        self.DeepFacePath = './DeepFace168.pickle'
         self.dataset_name = dataset_name
         self.checkpoint_dir = checkpoint_dir
-        self.loadDeepFace(self.DeepFacePath)
-        self.build_model()
+        self.loadDeepFace()#pt
+        self.build_model()#pt
+
+
 
     def build_model(self):
 
@@ -132,7 +134,7 @@ class DCGAN(object):
         #Note: not true, if WITHOUT_CODEMAP is true, then here is pure images without codemap and 3 channels
         #mirror concatenate
         mc = lambda left : tf.concat_v2([left, left[:,:,::-1,:]], 3)
-        self.images_with_code = tf.placeholder(tf.float32, [self.batch_size] + [self.output_size, self.output_size, CHANNEL], name='images_with_code')
+        self.images_with_code = tf.placeholder(tf.float32, [self.test_batch_size] + [self.output_size, self.output_size, CHANNEL], name='images_with_code')
         self.sample_images = tf.placeholder(tf.float32, [self.test_batch_size] + [self.output_size, self.output_size, CHANNEL], name='sample_images')
 
         if WITHOUT_CODEMAP:
@@ -151,30 +153,30 @@ class DCGAN(object):
         self.g32_sampleimages_with_code = tf.image.resize_bilinear(self.sample_images, [32, 32])
         self.g64_sampleimages_with_code = tf.image.resize_bilinear(self.sample_images, [64, 64])
 
-        self.labels = tf.placeholder(tf.float32, [self.batch_size] + [self.output_size, self.output_size, 3], name='label_images')
-        self.poselabels = tf.placeholder(tf.int32, [self.batch_size])
-        self.idenlabels = tf.placeholder(tf.int32, [self.batch_size])
-        self.landmarklabels = tf.placeholder(tf.float32, [self.batch_size, 5*2])
+        self.labels = tf.placeholder(tf.float32, [self.test_batch_size] + [self.output_size, self.output_size, 3], name='label_images')
+        self.poselabels = tf.placeholder(tf.int32, [self.test_batch_size])
+        self.idenlabels = tf.placeholder(tf.int32, [self.test_batch_size])
+        self.landmarklabels = tf.placeholder(tf.float32, [self.test_batch_size, 5*2])
         self.g_labels = self.labels #tf.reduce_mean(self.labels, 3, keep_dims=True)
         self.g8_labels = tf.image.resize_bilinear(self.g_labels, [8, 8])
         self.g16_labels = tf.image.resize_bilinear(self.g_labels, [16, 16])
         self.g32_labels = tf.image.resize_bilinear(self.g_labels, [32, 32])
         self.g64_labels = tf.image.resize_bilinear(self.g_labels, [64, 64])
 
-        self.eyel = tf.placeholder(tf.float32, [self.batch_size, EYE_H, EYE_W, 3])
-        self.eyer = tf.placeholder(tf.float32, [self.batch_size, EYE_H, EYE_W, 3])
-        self.nose = tf.placeholder(tf.float32, [self.batch_size, NOSE_H, NOSE_W, 3])
-        self.mouth = tf.placeholder(tf.float32, [self.batch_size, MOUTH_H, MOUTH_W, 3])
+        self.eyel = tf.placeholder(tf.float32, [self.test_batch_size, EYE_H, EYE_W, 3])
+        self.eyer = tf.placeholder(tf.float32, [self.test_batch_size, EYE_H, EYE_W, 3])
+        self.nose = tf.placeholder(tf.float32, [self.test_batch_size, NOSE_H, NOSE_W, 3])
+        self.mouth = tf.placeholder(tf.float32, [self.test_batch_size, MOUTH_H, MOUTH_W, 3])
 
-        self.eyel_label = tf.placeholder(tf.float32, [self.batch_size, EYE_H, EYE_W, 3])
-        self.eyer_label = tf.placeholder(tf.float32, [self.batch_size, EYE_H, EYE_W, 3])
-        self.nose_label = tf.placeholder(tf.float32, [self.batch_size, NOSE_H, NOSE_W, 3])
-        self.mouth_label = tf.placeholder(tf.float32, [self.batch_size, MOUTH_H, MOUTH_W, 3])
+        self.eyel_label = tf.placeholder(tf.float32, [self.test_batch_size, EYE_H, EYE_W, 3])
+        self.eyer_label = tf.placeholder(tf.float32, [self.test_batch_size, EYE_H, EYE_W, 3])
+        self.nose_label = tf.placeholder(tf.float32, [self.test_batch_size, NOSE_H, NOSE_W, 3])
+        self.mouth_label = tf.placeholder(tf.float32, [self.test_batch_size, MOUTH_H, MOUTH_W, 3])
 
-        self.eyel_sam = tf.placeholder(tf.float32, [self.batch_size, EYE_H, EYE_W, 3])
-        self.eyer_sam = tf.placeholder(tf.float32, [self.batch_size, EYE_H, EYE_W, 3])
-        self.nose_sam = tf.placeholder(tf.float32, [self.batch_size, NOSE_H, NOSE_W, 3])
-        self.mouth_sam = tf.placeholder(tf.float32, [self.batch_size, MOUTH_H, MOUTH_W, 3])
+        self.eyel_sam = tf.placeholder(tf.float32, [self.test_batch_size, EYE_H, EYE_W, 3])
+        self.eyer_sam = tf.placeholder(tf.float32, [self.test_batch_size, EYE_H, EYE_W, 3])
+        self.nose_sam = tf.placeholder(tf.float32, [self.test_batch_size, NOSE_H, NOSE_W, 3])
+        self.mouth_sam = tf.placeholder(tf.float32, [self.test_batch_size, MOUTH_H, MOUTH_W, 3])
 
 
         #feats contains: self.feat128, self.feat64, self.feat32, self.feat16, self.feat8, self.feat
@@ -188,16 +190,16 @@ class DCGAN(object):
         self.G_nose_sam, self.c_nose_sam = self.partRotator(self.nose_sam, "PartRotator_nose", reuse=True)
         self.G_mouth_sam, self.c_mouth_sam = self.partRotator(self.mouth_sam, "PartRotator_mouth", reuse=True)
 
-        self.z = tf.random_normal([self.batch_size, self.z_dim], mean=0.0, stddev=0.02, seed=2017)
+        self.z = tf.random_normal([self.test_batch_size, self.z_dim], mean=0.0, stddev=0.02, seed=2017)
 
-        #tf.placeholder(tf.float32, [self.batch_size, self.z_dim], name='z')
 
-        self.feats = self.generator(mc(self.images_with_code), self.batch_size, name="encoder")
+
+        self.feats = self.generator(mc(self.images_with_code), self.test_batch_size, name="encoder")
         self.feats += (mc(self.images_with_code), mc(self.g64_images_with_code), mc(self.g32_images_with_code),
                        self.G_eyel, self.G_eyer, self.G_nose, self.G_mouth,
                        self.c_eyel, self.c_eyer, self.c_nose, self.c_mouth,)
         self.check_sel128, self.check_sel64, self.check_sel32, self.check_sel16, self.check_sel8, self.G, self.G2, self.G3 = \
-        self.decoder(*self.feats, batch_size=self.batch_size)
+        self.decoder(*self.feats, batch_size=self.test_batch_size)
         self.poselogits, self.identitylogits, self.Glandmark = self.FeaturePredict(self.feats[5])
 
         sample_feats = self.generator(mc(self.sample_images),self.test_batch_size, name="encoder", reuse=True)
@@ -222,6 +224,7 @@ class DCGAN(object):
             _,_,_,_, self.G_pool5, self.Gvector = self.FeatureExtractDeepFace(tf.reduce_mean(self.G, axis=3, keep_dims=True))
             _,_,_,_, self.label_pool5, self.labelvector = self.FeatureExtractDeepFace(tf.reduce_mean(self.g_labels, axis=3, keep_dims=True), reuse=True)
             _,_,_,_, _, self.samplevector = self.FeatureExtractDeepFace(tf.reduce_mean(self.sample_images_nocode, axis=3, keep_dims=True), reuse=True)
+
             #self.Dv, self.Dv_logits = self.discriminatorClassify(self.Gvector)
             #self.dv_loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(self.Dv_logits, self.verify_labels))
             self.dv_loss = tf.reduce_mean(tf.abs(self.Gvector-self.labelvector))
@@ -229,15 +232,7 @@ class DCGAN(object):
             self.logfile = 'loss_verify.txt'
             #self.dv_sum = histogram_summary("dv_", self.Dv)
 
-        # self.d__sum = histogram_summary("d_", self.D_)
-        # self.d_sum = histogram_summary("d", self.D)
-        # self.G_sum = image_summary("G", self.G)
 
-        #basic loss
-
-        # self.d_loss_real = tf.reduce_mean(self.D_logits)
-        # self.d_loss_fake = -tf.reduce_mean(self.D_logits_)
-        # self.g_loss_adver = -tf.reduce_mean(self.D_logits_)
         self.d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D) * 0.9))
         self.d_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_)))
         self.g_loss_adver = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_) * 0.9))
@@ -251,12 +246,7 @@ class DCGAN(object):
         self.nose_loss = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(tf.abs(self.c_nose - self.nose_label), 1), 1))
         self.mouth_loss = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(tf.abs(self.c_mouth - self.mouth_label), 1), 1))
         #rotation L1 / L2 loss in g_loss
-        # one8 = tf.ones([1,8,4,1],tf.float32)
-        # mask8 = tf.concat_v2([one8, one8], 2)
-        # mask16 = tf.image.resize_nearest_neighbor(mask8, size=[16, 16])
-        # mask32 = tf.image.resize_nearest_neighbor(mask8, size=[32, 32])
-        # mask64 = tf.image.resize_nearest_neighbor(mask8, size=[64, 64])
-        # mask128 = tf.image.resize_nearest_neighbor(mask8, size=[128, 128])
+
         #use L2 for 128, L1 for others. mask emphasize left side.
         errL1 = tf.abs(self.G - self.g_labels) #* mask128
         errL1_2 = tf.abs(self.G2 - self.g64_labels) #* mask64
@@ -266,7 +256,6 @@ class DCGAN(object):
         errcheck32 = tf.abs(self.check_sel32 - self.g32_labels) #* mask32
         errcheck64 = tf.abs(self.check_sel64 - self.g64_labels) #* mask64
         errcheck128 = tf.abs(self.check_sel128 - self.g_labels) #* mask128
-
         self.weightedErrL1 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(errL1, 1), 1))
         self.symErrL1 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(symL1(#self.processor(self.G)
             tf.nn.avg_pool(self.G, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
@@ -275,32 +264,23 @@ class DCGAN(object):
         self.symErrL2 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(symL1(self.processor(self.G2)), 1), 1))
         self.weightedErrL3 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(errL1_3, 1), 1))
         self.symErrL3 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(symL1(self.processor(self.G3, reuse=True)), 1), 1))
-
         cond_L12 = tf.abs(tf.image.resize_bilinear(self.G, [64,64]) - tf.stop_gradient(self.G2))
         #self.condErrL12 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(cond_L12, 1), 1))
         #cond_L23 = tf.abs(tf.image.resize_bilinear(self.G2, [32,32]) - tf.stop_gradient(self.G3))
         #self.condErrL23 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(cond_L23, 1), 1))
         self.tv_loss = tf.reduce_mean(total_variation(self.G))
-        #self.weightedErr_check8 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(errcheck8, 1), 1))
-        #self.weightedErr_check16 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(errcheck16, 1), 1))
-        # self.weightedErr_check32 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(errcheck32, 1), 1))
-        # self.weightedErr_check64 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(errcheck64, 1), 1))
-        # self.weightedErr_check128 = tf.reduce_mean(tf.reduce_sum(tf.reduce_sum(errcheck128, 1), 1))
-        # mean = tf.reduce_mean(tf.reduce_mean(self.G, 1,keep_dims=True), 2, keep_dims=True)
-        # self.stddev = tf.reduce_mean(tf.squared_difference(self.G, mean))
 
         self.d_loss = self.d_loss_real + self.d_loss_fake
         self.g_loss = L1_1_W * (self.weightedErrL1 + SYM_W * self.symErrL1) + L1_2_W * (self.weightedErrL2 + SYM_W * self.symErrL2) \
                       + L1_3_W * (self.weightedErrL3 + SYM_W * self.symErrL3)
         self.g_loss += BELTA_FEATURE * self.dv_loss + ALPHA_ADVER * self.g_loss_adver + IDEN_W * self.idenloss + self.tv_loss * TV_WEIGHT
-
         self.rot_loss = PART_W * (self.eyel_loss + self.eyer_loss + self.nose_loss + self.mouth_loss)
-        #self.sel_loss = self.weightedErr_check32 + self.weightedErr_check64 + self.weightedErr_check128
-        #self.g_loss += self.sel_loss
-
         self.var_file = open('var_log.txt', mode='a')
         t_vars = [var for var in tf.trainable_variables() if 'FeatureExtractDeepFace' not in var.name \
                                                                                     and 'processor' not in var.name]
+        print('done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+
+
         def isTargetVar(name, tokens):
             for token in tokens:
                 if token in name:
@@ -320,37 +300,15 @@ class DCGAN(object):
         self.ed_vars = list(self.dec_vars); self.ed_vars.extend(self.enc_vars);
         self.ed_vars.extend(self.pre_vars); self.ed_vars.extend(self.rot_vars);
         self.ed_vars.extend(self.sel_vars)
-
-        #self.rd_vars = list(self.dec_vars); self.rd_vars.extend([var for var in self.d_vars if isTargetVar(var.name, dec128toks)])
-
-        #print("-----enc and dec ---->", map(lambda x:x.name, self.ed_vars), sep='\n', file=var_file)
-        #print("-----enc and sel ---->", map(lambda x:x.name, self.se_vars), sep='\n',  file=var_file)
-        #print("-----discrim ---->", map(lambda x:x.name, self.d_vars),sep='\n',  file=var_file)
-
         self.saver = tf.train.Saver(t_vars, max_to_keep=2)
+
 
     def train(self, config):
         """Train DCGAN"""
         #data = glob(os.path.join("./data", config.dataset, "*.jpg"))
         data = MultiPIE(LOAD_60_LABEL=LOAD_60_LABEL, GENERATE_MASK=USE_MASK, RANDOM_VERIFY=RANDOM_VERIFY, MIRROR_TO_ONE_SIDE = True, source = self.testingphase)
-        #np.random.shuffle(data)
+
         config.sample_dir += '{:05d}'.format(random.randint(1,100000))
-
-        d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.d_loss, var_list=self.d_vars)
-        #clip_D = [p.assign(tf.clip_by_value(p, -CLIP_D, CLIP_D)) for p in self.d_vars]
-
-        g_dec_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                           .minimize(self.g_loss, var_list=self.ed_vars)
-        #g_enc_optim = tf.train.AdamOptimizer(config.learning_rate * 0.001, beta1=config.beta1) \
-        #                  .minimize(self.g_loss, var_list=self.enc_vars)
-        # s_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-        #                   .minimize(self.sel_loss, var_list=self.se_vars)
-        #g_sel_dec_optim = tf.train.RMSPropOptimizer(config.learning_rate) \
-        #                 .minimize(self.g_loss + self.sel_loss + self.rot_loss, var_list=self.all_g_vars)
-        rot_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.rot_loss, var_list=self.rot_vars)
-
         init_op = tf.global_variables_initializer()
         self.sess.run(init_op)
 
@@ -362,142 +320,52 @@ class DCGAN(object):
         else:
             print(" [!] Load failed...")
 
-        sample_images, filenames ,sample_eyel, sample_eyer, sample_nose, sample_mouth, \
-            sample_labels, sample_leyel, sample_leyer, sample_lnose, sample_lmouth, sample_iden = data.test_batch(self.test_batch_size * self.sample_run_num)
-        if not self.testing:
-            sample_imagesT, filenamesT ,sample_eyelT, sample_eyerT, sample_noseT, sample_mouthT, \
-            sample_labelsT, sample_leyelT, sample_leyerT, sample_lnoseT, sample_lmouthT, sample_idenT = data.test_batch(self.test_batch_size * self.sample_run_num * RANK_MUL, Pose=RANGE)
+        ##这里调整下
+        sample_images = np.empty([self.test_batch_size, IMAGE_SIZE, IMAGE_SIZE, 3])
+        sample_images[0, ...], feats = data.load_image(self.test_filename)
+
+        sample_eyel = np.empty([self.test_batch_size, EYE_H, EYE_W, 3], dtype=np.float32)
+        sample_eyer = np.empty([self.test_batch_size, EYE_H, EYE_W, 3], dtype=np.float32)
+        sample_nose = np.empty([self.test_batch_size, NOSE_H, NOSE_W, 3], dtype=np.float32)
+        sample_mouth = np.empty([self.test_batch_size, MOUTH_H, MOUTH_W, 3],dtype=np.float32)
+
+        sample_eyel[0,...] = feats[1]
+        sample_eyer[0,...] = feats[2]
+        sample_nose[0,...] = feats[3]
+        sample_mouth[0, ...] = feats[4]
+        #这里调整下
+        if True:
             if WITHOUT_CODEMAP:
                 sample_images = sample_images[..., 0:3]
             #append loss log to file
-            self.f = open(self.logfile, mode='a')
-            self.f.write('----'+strftime("%a, %d %b %Y %H:%M:%S +0000", localtime())+' BEGINS----MODE:'+MODE+'-----\n')
-            print("start training!")
-            for epoch in xrange(config.epoch):
-                #data = glob(os.path.join("./data", config.dataset, "*.jpg"))
-                batch_idxs = min(data.size, config.train_size) // self.batch_size
+            counter += 1
+            print('.',end='');sys.stdout.flush()
+            if True:
+                currentBatchSamples =  sample_images[ :]
+                currentBatchEyel =  sample_eyel[ :]
+                currentBatchEyer =  sample_eyer[ :]
+                currentBatchNose = sample_nose[ :]
+                currentBatchMouth = sample_mouth[:]
+                samples = self.sess.run(
+                    self.sample_generator,
+                    feed_dict={ self.sample_images: currentBatchSamples,
+                                self.eyel_sam : currentBatchEyel,
+                                self.eyer_sam : currentBatchEyer,
+                                self.nose_sam : currentBatchNose,
+                                self.mouth_sam : currentBatchMouth
+                                })
+                print(samples[5][0,:,:,:].shape)#5,6,7 stand for 32 64 128
+                #原来的保存的是 samples[5或者6或者7]，然后imageio.imwrite(filename,images[i,:,:,0])，合起来就是 samples[5][0,:,:,0]或者samples[5][0,:,:,:]
 
-                for idx in xrange(0, batch_idxs):
-                    #load data from MultiPIE
-                    batch_images_with_code, batch_labels, batch_masks, verify_images, verify_labels, \
-                    batch_pose, batch_iden, batch_landmarks,\
-                    batch_eyel, batch_eyer, batch_nose, batch_mouth,\
-                    batch_eyel_label, batch_eyer_label, batch_nose_label, batch_mouth_label \
-                        = data.next_image_and_label_mask_batch(self.batch_size, imageRange=RANGE, imageRangeLow=RANGE_LOW)
-                    # batch_images = batch_images_with_code[:,:,:,0:3] #discard codes
-                    if WITHOUT_CODEMAP:
-                        batch_images_with_code = batch_images_with_code[..., 0:3]
+                print('ok')
+                imageio.imwrite('./train_pt.png',samples[5][0,:,:,:])
 
-                    # needs self.G(needing images with code) and real images
-                    for _ in range(UPDATE_D):
-                        # Update D network
-                        _ = self.sess.run([d_optim,],
-                            feed_dict={ self.images_with_code: batch_images_with_code,
-                                        self.labels : batch_labels,
-                                        self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,
-                                        })
-                    for _ in range(UPDATE_G):
-                        # Update G network
-                        # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-                        _ = self.sess.run([rot_optim, g_dec_optim,],
-                        # _ = self.sess.run([g_sel_dec_optim],
-                            feed_dict={self.images_with_code: batch_images_with_code,
-                                       self.labels : batch_labels,
-                                       self.eyel : batch_eyel, self.eyer : batch_eyer, self.nose: batch_nose, self.mouth: batch_mouth,
-                                       self.poselabels : batch_pose, self.idenlabels: batch_iden, self.landmarklabels: batch_landmarks,
-                                       self.eyel_label : batch_eyel_label, self.eyer_label : batch_eyer_label,
-                                       self.nose_label: batch_nose_label, self.mouth_label : batch_mouth_label
-                                       })
-
-                    counter += 1
-                    print('.',end='');sys.stdout.flush()
-                    if(counter % 5 == 0):
-                        self.evaluate(epoch, idx, batch_idxs, start_time, 'train',
-                                       batch_images_with_code,  batch_eyel, batch_eyer, batch_nose, batch_mouth,
-                                       batch_labels, batch_eyel_label, batch_eyer_label, batch_nose_label, batch_mouth_label, batch_iden);
-                    if np.mod(counter, self.sample_interval) == self.sample_interval-1:
-                        for i in range(self.sample_run_num):
-                            print(i, end=' ')
-                            currentBatchSamples = sample_images[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchEyel =  sample_eyel[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchEyer =  sample_eyer[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchNose = sample_nose[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchMouth = sample_mouth[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            samples = self.sess.run(
-                                self.sample_generator,
-                                feed_dict={ self.sample_images: currentBatchSamples,
-                                            self.eyel_sam : currentBatchEyel,
-                                            self.eyer_sam : currentBatchEyer,
-                                            self.nose_sam : currentBatchNose,
-                                            self.mouth_sam : currentBatchMouth
-                                            })
-                            savedtest = save_images(currentBatchSamples if WITHOUT_CODEMAP else currentBatchSamples[...,0:3], [100, 100],
-                                                    './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i), suffix='')
-                            savedoutput = save_images(samples[5], [100, 100],
-                                                      './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_128')
-                            savedoutput = save_images(samples[6], [100, 100],
-                                                      './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_64')
-                            savedoutput = save_images(samples[7], [100, 100],
-                                                      './{}/{:02d}_{:04d}/train{}_'.format(config.sample_dir, epoch, idx, i),suffix='_32')
-                        print("[{} completed{} and saved {}.]".format(config.sample_dir, savedtest*self.sample_run_num, savedoutput*self.sample_run_num))
-
-                        #testing accuracy
-                        savedir = 'tem_test'
-                        if not os.path.exists(savedir):
-                            os.mkdir(savedir)
-                        else:
-                            #subprocess.call(['rm' '-f' 'tem_test/*'])
-                            shutil.rmtree(savedir, ignore_errors=True)
-                            os.mkdir(savedir)
-                            print("cleaned tem_test!")
-                        listfid = open('probef.txt','w')
-                        for i in range(self.sample_run_num * RANK_MUL):
-                            currentBatchSamples = sample_imagesT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchEyel =  sample_eyelT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchEyer =  sample_eyerT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchNose = sample_noseT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchMouth = sample_mouthT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchLSamples = sample_labelsT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchLEyel =  sample_leyelT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchLEyer =  sample_leyerT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchLNose = sample_lnoseT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchLMouth = sample_lmouthT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            currentBatchIden = sample_idenT[i*self.test_batch_size:(i+1)*self.test_batch_size,...]
-                            if i % (4 * RANK_MUL) == 0:
-                                self.evaluate(epoch, idx, batch_idxs, start_time, 'test',
-                                              currentBatchSamples, currentBatchEyel, currentBatchEyer, currentBatchNose, currentBatchMouth,
-                                              currentBatchLSamples, currentBatchLEyel, currentBatchLEyer, currentBatchLNose, currentBatchLMouth, currentBatchIden);
-                            samples = self.sess.run(
-                                self.sample_generator,
-                                feed_dict={ self.sample_images: currentBatchSamples,
-                                            self.eyel_sam : currentBatchEyel,
-                                            self.eyer_sam : currentBatchEyer,
-                                            self.nose_sam : currentBatchNose,
-                                            self.mouth_sam : currentBatchMouth
-                                            })
-                            samplevectors = self.samplevector.eval({self.sample_images_nocode : samples[5]})
-                            for k in range(samplevectors.shape[0]):
-                                filename = filenamesT[i*self.test_batch_size + k]
-                                savefilename = filename.replace('.png','.feat')
-                                label = filename[0:3]
-                                listfid.write(savedir + '/' + filename +' '+ label + '\n')
-                                result = samplevectors[k,:]
-                                f = open(savedir +'/'+ savefilename,'wb')
-                                f.write(result)
-                                f.close()
-                        listfid.close()
-                        print("[{}  saved {} feats. calling comparision..]".format(savedir, self.test_batch_size * self.sample_run_num))
-                        output, err = subprocess.Popen('./evaluation_rank.sh', stdout=subprocess.PIPE, shell=True).communicate()
-                        tobePrint = '-------!' + ''.join([rank for rank in output.splitlines() if rank.startswith('Rank-1')]) + '!-------'
-                        print(err, tobePrint)
-                        self.var_file.write(tobePrint)
-                        self.var_file.flush()
-                    if np.mod(counter, self.save_interval) == self.save_interval-1:
-                        self.save(config.checkpoint_dir, counter)
+            print("[ completed and saved ]")
+              
         else:
 
             print('test samples reading complete')
-            batchnum = sample_images.shape[0] // self.test_batch_size #current test batch size
+            #batchnum = sample_images.shape[0] // self.test_batch_size #current test batch size
             savedtest = 0
             savedoutput = 0
             sample_dir = 'testall'
@@ -581,7 +449,7 @@ class DCGAN(object):
             h4 = lrelu(batch_norm(conv2d(h3r1, self.df_dim*8, name='d_h4_conv'), name='d_bn4'))
             h4r1 = resblock(h4, name = "d_h4_conv_res1")
             h5 = conv2d(h4r1, 1, k_h=1, k_w=1, d_h=1, d_w=1, name='d_h5_conv')
-            h6 = tf.reshape(h5, [self.batch_size, -1])
+            h6 = tf.reshape(h5, [self.test_batch_size, -1])
             #fusing 512 feature map to one layer prediction.
             return h6, h6 #tf.nn.sigmoid(h6), h6
 
@@ -775,20 +643,27 @@ class DCGAN(object):
         self.f.flush()
         print(tobePrint)
     #DEEPFACE MODEL BEGINS---
-    def loadDeepFace(self, DeepFacePath):
+    def loadDeepFace(self, DeepFacePath= None):
         if DeepFacePath is None:
             path = sys.modules[self.__class__.__module__].__file__
             # print path
             path = os.path.abspath(os.path.join(path, os.pardir))
             # print path
-            path = os.path.join(path, "DeepFace.pickle")
+            path = os.path.join(path, "DeepFace168.pickle")
             DeepFacePath = path
             logging.info("Load npy file from '%s'.", DeepFacePath)
         if not os.path.isfile(DeepFacePath):
             logging.error(("File '%s' not found. "), DeepFacePath)
             sys.exit(1)
-        with open(DeepFacePath,'r') as file:
-            self.data_dict = pickle.load(file)
+
+        #with open(DeepFacePath,'r') as file:
+        #    self.data_dict = pickle.load(file)
+        with open(DeepFacePath,'rb') as file: # Binary read
+            u = pickle._Unpickler(file)
+            u.encoding = 'latin1'
+            p = u.load()
+            self.data_dict = p
+           
         print("Deep Face pickle data file loaded")
 
     def FeatureExtractDeepFace(self, images, name = "FeatureExtractDeepFace", reuse=False):
@@ -798,7 +673,7 @@ class DCGAN(object):
                 scope.reuse_variables()
 
             conv1 = self._conv_layer(images, name='conv1')
-            print(3, type(3))
+            #print(3, type(3))
             slice1_1, slice1_2 = tf.split(3, 2, conv1)
             eltwise1 = tf.maximum(slice1_1, slice1_2)
             pool1 = tf.nn.max_pool(eltwise1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
@@ -997,24 +872,13 @@ class DCGAN(object):
 
     #DEEPFACE OPS ENDS---
 
-    def save(self, checkpoint_dir, step):
-        model_name = "DCGAN.model"
-        model_dir = "%s_%s_%s" % (self.dataset_name, self.batch_size, self.output_size)
-        checkpoint_dir = os.path.join(checkpoint_dir, model_dir)
-
-        if not os.path.exists(checkpoint_dir):
-            os.makedirs(checkpoint_dir)
-        print(" [*] Saving checkpoints...at step " + str(step))
-        self.saver.save(self.sess,
-                        os.path.join(checkpoint_dir, model_name),
-                        global_step=step)
 
     def load(self, checkpoint_dir):
         print(" [*] Reading checkpoints...")
 
-        model_dir = "%s_%s_%s" % (self.dataset_name, self.batch_size, self.output_size)
-        checkpoint_dir = os.path.join(checkpoint_dir, model_dir)
-
+        #model_dir = "%s_%s_%s" % (self.dataset_name, self.test_batch_size, self.output_size)
+        #checkpoint_dir = os.path.join(checkpoint_dir, model_dir)
+        checkpoint_dir = '/home/ubuntu3000/pt/TP-GAN/checkpoint60/MultiPIE_2_128/'
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
         if ckpt and ckpt.model_checkpoint_path:
             ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
@@ -1028,21 +892,20 @@ class DCGAN(object):
 def main(_):
     pp.pprint(flags.FLAGS.__flags)
 
-    if not os.path.exists(FLAGS.checkpoint_dir):
-        os.makedirs(FLAGS.checkpoint_dir)
-    if not os.path.exists(FLAGS.sample_dir):
-        os.makedirs(FLAGS.sample_dir)
-
+    assert os.path.exists(FLAGS.checkpoint_dir)
+    assert os.path.exists(FLAGS.sample_dir)
+    
     with tf.Session() as sess:
         dcgan = DCGAN(sess,
                       image_size=FLAGS.image_size,
-                      batch_size=FLAGS.batch_size,
+                      batch_size=FLAGS.test_batch_size,
                       output_size=FLAGS.output_size,
                       c_dim=FLAGS.c_dim,
                       dataset_name=FLAGS.dataset,
                       is_crop=FLAGS.is_crop,
                       checkpoint_dir=FLAGS.checkpoint_dir,
                       sample_dir=FLAGS.sample_dir)
+        dcgan.test_filename='test_tem.png'
         dcgan.train(FLAGS)
 
 if __name__ == '__main__':

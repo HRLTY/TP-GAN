@@ -45,7 +45,7 @@ class MultiPIE():
     """
     def __init__(self, datasplit='train', Random=True, LOAD_60_LABEL=False, MIRROR_TO_ONE_SIDE=True, RANDOM_VERIFY=False,
                  GENERATE_MASK=False, source='without90', testing = False):
-        self.dir = '/home/TP-GAN/data/45/'#图片文件夹
+        self.dir = '/home/ubuntu3000/pt/TP-GAN/data/45/'#图片文件夹
         self.testing = testing
         
         self.split = datasplit
@@ -56,8 +56,8 @@ class MultiPIE():
         self.RANDOM_VERIFY = RANDOM_VERIFY
         self.GENERATE_MASK = GENERATE_MASK
         if not testing:
-            split_f = '/home/TP-GAN/data/train.csv'
-            split_f_test = '/home/TP-GAN/data/test.csv'
+            split_f = '/home/ubuntu3000/pt/TP-GAN/data/train.csv'
+            split_f_test = '/home/ubuntu3000/pt/TP-GAN/data/test.csv'
             #self.indices是图片的名称大全,原本是csv文件里读取的
             self.indices = open(split_f, 'r').read().splitlines()
             self.indices_test = open(split_f_test, 'r').read().splitlines()
@@ -71,7 +71,7 @@ class MultiPIE():
                 random.seed(self.seed)
                 self.idx = random.randint(0, len(self.indices)-1)
         else:#only load test images for a separate list file.
-            split_f_test = '/home/TP-GAN/data/test.csv'
+            split_f_test = '/home/ubuntu3000/pt/TP-GAN/data/test.csv'
             self.indices_test = open(split_f_test, 'r').read().splitlines()
             self.size = 0
             self.test_size = len(self.indices_test)
@@ -306,7 +306,7 @@ class MultiPIE():
         #crop four parts
         trans_points = np.empty([5,2],dtype=np.int32)
         if True:
-            featpath = os.path.join('/home/TP-GAN/data/45_5pt',filename.replace('.png','.5pt'))
+            featpath = os.path.join('/home/ubuntu3000/pt/TP-GAN/data/45_5pt',filename.replace('.png','.5pt'))
             with open(featpath, 'r') as csvfile:
                 reader = csv.reader(csvfile, delimiter=' ')
                 for ind,row in enumerate(reader):
