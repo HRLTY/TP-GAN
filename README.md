@@ -35,7 +35,7 @@ Here are random examples of 10 testing image pairs for each degree.
 
 It was initially written in Tensorflow 0.12. If you have implemented another version, I'll be happy to reference it here.
 
-This is an initial release of code, which may not be fully tested. Refinement, input data example, pre-trained models, and precomputed testing image features will come later.
+This is an initial release of code, which may not be fully tested.
 
 The input is cropped with the Matlab script `face_db_align_single_custom.m`, which accepts 5 keypoints and outputs a cropped image and transformed keypoints.
 
@@ -68,5 +68,5 @@ Any suggestion and/or comment would be valuable. Please send an email to Rui at 
 
 ### License
 
-This code is freely available for free non-commercial use, and may be redistributed under the conditions set by the license. Please, see the [license](https://github.com/HRLTY/TP-GAN/blob/master/LICENSE) for further details. For commercial queries, please contact [Rui Huang](http://www.andrew.cmu.edu/user/ruih2/) and [Ran He](http://www.nlpr.ia.ac.cn/english/irds/People/rhe.html).
+This code is freely available for free non-commercial use, and may be redistributed under the conditions set by the license. Please, see the [license](https://github.com/HRLTY/TP-GAN/blob/master/LICENSE) for further details. For commercial queries, please contact [Rui Huang](http://www.andrew.cmu.edu/user/ruih2/) and [Ran He](https://rhe-web.github.io/).
 
